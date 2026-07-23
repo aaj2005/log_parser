@@ -8,7 +8,7 @@
 
 struct log_entry {	
 		std::string ip_address;
-		time_t timestamp;
+		std::string timestamp;
 		std::string http_method;
 		std::string url;
 		unsigned short status_code;
