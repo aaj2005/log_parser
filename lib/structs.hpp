@@ -3,6 +3,7 @@
 #include <map>
 #include <fstream>
 #include <filesystem>
+#include <vector>
 
 
 struct log_entry {	
@@ -36,6 +37,7 @@ class LogReader{
 			if (file->is_open()){
 				opened_files[path] = std::move(file);
 			}
+			line_number[path] = 1;
 		}
 
 		void close_file(std::string path){
@@ -45,6 +47,7 @@ class LogReader{
 			if (file != opened_files.end()){
 				file->second->close();
 				opened_files.erase(path);
+				line_number.erase(path);
 			}
 
 		}
@@ -53,6 +56,14 @@ class LogReader{
 			for (const auto& entry : opened_files){
 				close_file(entry.first);
 			}
+		}
+		
+		std::vector<std::string> get_paths(){
+			std::vector<std::string> paths;
+			for (auto& entry : opened_files){
+				paths.push_back(entry.first);
+			} 
+			return paths;
 		}
 
 		std::string getNextLine(std::string path){
@@ -63,6 +74,7 @@ class LogReader{
 
 			// check end of file
 			if ((*file).peek() == EOF){
+				line_number[path] = 1;
 				(*file).clear();
 				(*file).seekg(0);
 				return "EOF";
@@ -72,12 +84,7 @@ class LogReader{
 			
 			// get next line 
 			std::getline(*file, line);
-
-			if (line_number.find(path) == line_number.end()){
-				line_number[path] = 1;
-			}else{
-				line_number[path]++;
-			}
+			line_number[path]++;
 
 			return line;
 		}
@@ -85,7 +92,7 @@ class LogReader{
 		int getLineNumber(std::string path){
 			return line_number[path];
 		}
-
+	
 
 	private:
 		std::map<std::string, std::unique_ptr<std::ifstream>> opened_files;
