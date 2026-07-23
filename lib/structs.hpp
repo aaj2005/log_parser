@@ -7,12 +7,11 @@
 
 
 struct log_entry {	
-		std::string ip_address;
-		std::string timestamp;
-		std::string http_method;
-		std::string url;
-		unsigned short status_code;
-		int bytes_sent;
+		std::string_view ip_address;
+		std::string_view timestamp;
+		std::string_view request;
+		std::string_view status_code;
+		std::string_view bytes_sent;
 };
 
 class LogReader{
