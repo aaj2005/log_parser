@@ -21,28 +21,33 @@
 
 std::regex rgx("(?:^|;[^\\d.])((?:(?:[1-9]?\\d|1\\d\\d|2[0-4]\\d|25[0-5])\\.){3}(?:[1-9]?\\d|1\\d\\d|2[0-4]\\d|25[0-5])(?![\\d.])).*?\\[(.*?)\\].*?\\\"(.*)\\\".*?([0-9]+).*?([0-9]+)");
 
-LogReader reader;
 
 
 class LogParser{
 
 	public:
 
-		LogParser(std::vector<std::string> files) {
-			reader = LogReader();
+		LogParser(std::vector<std::string> files): reader(LogReader()), analyser(LogAnalyser())  {
+			
 			for (std::string file : files){
 				reader.open_file(file);
 			}
+
 		}
 		~LogParser(){reader.close_all();}
 
 		void parse_all(){
 			std::vector<std::string> files = reader.get_paths();
 			for (std::string file: files){
-				std::string_view line = "";
+				std::string line = "";
 				while (line != "EOF"){
 					line = reader.getNextLine(file);
 					log_entry entry = parseLine(line);
+
+					analyser.add_ip(entry.ip_address);
+					analyser.add_status(entry.status_code);
+					analyser.add_byte(entry.bytes_sent);
+
 
 					
 				} 
@@ -99,67 +104,9 @@ class LogParser{
 
 			};
 		}
-};
 
-class LogAnalyser{
-
-	public:
-
-		LogAnalyser(): total_bytes(0) {}
-
-		void add_byte(int byte){total_bytes+=byte;}
-		
-		void add_ip(std::string ip){
-			auto curr = ip_freq.find(ip);
-			if (curr == ip_freq.end())
-				ip_freq[std::string(ip)] = 1;
-			else
-				ip_freq[std::string(ip)]++;
-		}
-
-		void add_status(int code){
-			auto curr = status_freq.find(code);
-			if (curr == status_freq.end())
-				status_freq[code] = 1;
-			else
-				status_freq[code]++;
-		}
-
-		long long total_sent(){
-			return total_bytes;
-		}
-
-		std::vector<std::pair<int, int>> code_distr(){
-			std::vector<std::pair<int, int>> distributions;
-			for (auto status: status_freq){
-				distributions.push_back({status.first, status.second});
-			}
-			std::sort(distributions.begin(), distributions.end(), std::greater<std::pair<int,int>>());
-			return distributions;
-		}
-
-		std::vector<std::pair<std::string_view, int>> top_n(int n){
-			int max = (n > ip_freq.size()) ? ip_freq.size() : n;
-
-			std::vector<std::pair<std::string_view, int>> distributions;
-			
-			for (auto status: ip_freq){
-				distributions.push_back({status.first, status.second});
-			}
-
-			std::sort(distributions.begin(), distributions.end(),std::greater<std::pair<int,int>>());
-			return std::vector<std::pair<std::string_view, int>>(distributions.begin(), distributions.begin()+ max);
-		}
-
-
-	private:
-		long long total_bytes;
-		std::unordered_map<std::string, int> ip_freq;
-		std::unordered_map<int, int> status_freq;
-
-
-
+		LogReader reader;
+		LogAnalyser analyser;
 
 };
-
 

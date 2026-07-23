@@ -100,3 +100,67 @@ class LogReader{
 
 
 
+class LogAnalyser{
+
+	public:
+
+		LogAnalyser(): total_bytes(0) {}
+
+		void add_byte(std::string_view byte){total_bytes+=std::stoull(std::string(byte));}
+		
+		void add_ip(std::string_view ip){
+			std::string addr = std::string(ip);
+			auto curr = ip_freq.find(addr);
+			if (curr == ip_freq.end())
+				ip_freq[addr] = 1;
+			else
+				ip_freq[addr]++;
+		}
+
+		void add_status(std::string_view status_code){
+			int code = std::stoi(std::string(status_code));
+			auto curr = status_freq.find(code);
+			if (curr == status_freq.end())
+				status_freq[code] = 1;
+			else
+				status_freq[code]++;
+		}
+
+		long long total_sent(){
+			return total_bytes;
+		}
+
+		std::vector<std::pair<int, int>> code_distr(){
+			std::vector<std::pair<int, int>> distributions;
+			for (auto status: status_freq){
+				distributions.push_back({status.first, status.second});
+			}
+			std::sort(distributions.begin(), distributions.end(), std::greater<std::pair<int,int>>());
+			return distributions;
+		}
+
+		std::vector<std::pair<std::string, int>> top_n(int n){
+			int max = (n > ip_freq.size()) ? ip_freq.size() : n;
+
+			std::vector<std::pair<std::string, int>> distributions;
+			
+			for (auto status: ip_freq){
+				distributions.push_back({status.first, status.second});
+			}
+
+			std::sort(distributions.begin(), distributions.end(),std::greater<std::pair<int,int>>());
+			return std::vector<std::pair<std::string, int>>(distributions.begin(), distributions.begin()+ max);
+		}
+
+
+	private:
+		long long total_bytes;
+		std::unordered_map<std::string, int> ip_freq;
+		std::unordered_map<int, int> status_freq;
+
+
+
+
+};
+
+
