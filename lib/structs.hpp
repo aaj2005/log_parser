@@ -1,6 +1,6 @@
 #include <string>
 #include <ctime>
-#include <map>
+#include <unordered_map>
 #include <fstream>
 #include <filesystem>
 #include <vector>
@@ -29,8 +29,8 @@ class LogReader{
 			close_all();
 		} 
 
-		void open_file(std::string path){
-			auto path = std::filesystem::canonical(path);
+		void open_file(std::string full_path){
+			auto path = std::filesystem::canonical(full_path);
 			
 			std::unique_ptr<std::ifstream> file = std::make_unique<std::ifstream>(file);
 			if (file->is_open()){
@@ -39,9 +39,9 @@ class LogReader{
 			line_number[path] = 1;
 		}
 
-		void close_file(std::string path){
+		void close_file(std::string full_path){
 			// std::filesystem::canonical ensures that we get the absolute path to a file
-			auto path = std::filesystem::canonical(path);
+			auto path = std::filesystem::canonical(full_path);
 			auto file = opened_files.find(path); 
 			if (file != opened_files.end()){
 				file->second->close();
@@ -94,8 +94,8 @@ class LogReader{
 	
 
 	private:
-		std::map<std::string, std::unique_ptr<std::ifstream>> opened_files;
-		std::map<std::string, int> line_number;
+		std::unordered_map<std::string, std::unique_ptr<std::ifstream>> opened_files;
+		std::unordered_map<std::string, int> line_number;
 };
 
 
