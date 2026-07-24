@@ -13,7 +13,6 @@ int main(int argc, char* argv[]){
 	std::vector<std::string> files;
 	files.reserve(argc);
 	for (int i = 1; i < argc; i++) {
-		std::cout<<argc<<std::endl;
 		if(!std::filesystem::is_regular_file(argv[i])){
 			std::cerr << "Argument:"<< argv[i]<<" is not a file!"<<std::endl;
 			return -1;

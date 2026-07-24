@@ -1,6 +1,7 @@
 
-#include "structs.hpp"
 #include <stdexcept>
+#include <optional>
+#include "structs.hpp"
 
 
 class LogParser{
@@ -20,16 +21,18 @@ class LogParser{
 			std::vector<std::string> files = reader.get_paths();
 			for (std::string file: files){
 				std::string line = "";
+				line = reader.getNextLine(file);
 				while (line != "EOF"){
-					line = reader.getNextLine(file);
-					log_entry entry = parseLine(line);
+					auto entry = parseLine(line);
+					if (entry.has_value()){
+						analyser.add_ip(entry->ip_address);
+						analyser.add_status(entry->status_code);
+						analyser.add_byte(entry->bytes_sent);
+					}else{
+						std::cout<<"Malformed log line in "<<file<<":"<<reader.getLineNumber(file)<<std::endl;
+					}
 
-					analyser.add_ip(entry.ip_address);
-					analyser.add_status(entry.status_code);
-					analyser.add_byte(entry.bytes_sent);
-
-
-					
+					line = reader.getNextLine(file);					
 				} 
 			}
 		}
@@ -38,14 +41,14 @@ class LogParser{
 
 	private:
 		// "192.168.1.5 - - [22/Jul/2026:12:01:00 +0000] \"GET /home HTTP/1.1\" 200 1024"
-		log_entry parseLine(std::string_view line){
+		std::optional<log_entry> parseLine(std::string_view line){
 		
 			// find the end of the ip address
 			size_t ip_addr_end = line.find(" ");
 			
 			// check that we hit IP address
 			if (ip_addr_end == std::string_view::npos){
-				throw std::invalid_argument("Invalid log entry structure");
+				return std::nullopt;
 			}
 
 			std::string_view ip = line.substr(0, ip_addr_end);
@@ -59,7 +62,7 @@ class LogParser{
 
 			// check that we have the timestamp
 			if (timestamp_start == std::string_view::npos || timestamp_end == std::string_view::npos){
-				throw std::invalid_argument("Invalid log entry structure");
+				return std::nullopt;
 			}
 
 
@@ -74,7 +77,7 @@ class LogParser{
 
 			// check that we have the request
 			if (quote_start == std::string_view::npos || quote_end == std::string_view::npos){
-				throw std::invalid_argument("Invalid log entry structure");
+				return std::nullopt;
 			}
 
 			std::string_view request = line.substr(quote_start + 1, quote_end - quote_start - 1);
@@ -87,7 +90,7 @@ class LogParser{
 
 			// check that we have the status code
 			if (status_start == std::string_view::npos || status_end == std::string_view::npos){
-				throw std::invalid_argument("Invalid log entry structure");
+				return std::nullopt;
 			}
 
     		std::string_view status_str = line.substr(status_start, status_end - status_start);
@@ -98,7 +101,7 @@ class LogParser{
 
 			// check that we have the bytes sent
 			if (bytes_start == std::string_view::npos){
-				throw std::invalid_argument("Invalid log entry structure");
+				return std::nullopt;
 			}
 
 			std::string_view bytes_str = line.substr(bytes_start);

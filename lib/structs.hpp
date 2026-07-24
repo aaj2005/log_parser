@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 
 struct log_entry {	
@@ -37,7 +38,7 @@ class LogReader{
 			if (file->is_open()){
 				opened_files[path] = std::move(file);
 			}
-			line_number[path] = 1;
+			line_number[path] = 0;
 		}
 
 		void close_file(std::string full_path){
@@ -79,19 +80,23 @@ class LogReader{
 			auto& file = opened_files[path];
 
 
-			// check end of file
-			if ((*file).peek() == EOF){
-				line_number[path] = 1;
-				(*file).clear();
-				(*file).seekg(0);
-				return "EOF";
-			}
 
 			std::string line;
 			
 			// get next line 
-			std::getline(*file, line);
-			line_number[path]++;
+			do{
+				std::getline(*file, line);
+				line_number[path]++;
+			}while(line.empty() && !((*file).peek() == EOF)); // skip empty lines
+			
+			
+			// check end of file
+			if ((*file).peek() == EOF){
+				line_number[path] = 0;
+				(*file).clear();
+				(*file).seekg(0);
+				return "EOF";
+			}
 
 			return line;
 		}
