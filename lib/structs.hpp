@@ -49,12 +49,19 @@ class LogReader{
 				opened_files.erase(path);
 				line_number.erase(path);
 			}
-
 		}
 
 		void close_all(){
-			for (const auto& entry : opened_files){
-				close_file(entry.first);
+			auto it = opened_files.begin();
+
+			while(it != opened_files.end()){
+				std::string filename = it->first;
+				// advance iterator to next file name
+				++it;
+
+				// close file 
+				close_file(filename);
+
 			}
 		}
 		
