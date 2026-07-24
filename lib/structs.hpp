@@ -4,6 +4,7 @@
 #include <fstream>
 #include <filesystem>
 #include <vector>
+#include <algorithm>
 
 
 struct log_entry {	
@@ -30,9 +31,9 @@ class LogReader{
 		} 
 
 		void open_file(std::string full_path){
-			auto path = std::filesystem::canonical(full_path);
+			auto path = std::filesystem::canonical(full_path).string();
 			
-			std::unique_ptr<std::ifstream> file = std::make_unique<std::ifstream>(file);
+			std::unique_ptr<std::ifstream> file = std::make_unique<std::ifstream>(path);
 			if (file->is_open()){
 				opened_files[path] = std::move(file);
 			}
@@ -41,7 +42,7 @@ class LogReader{
 
 		void close_file(std::string full_path){
 			// std::filesystem::canonical ensures that we get the absolute path to a file
-			auto path = std::filesystem::canonical(full_path);
+			auto path = std::filesystem::canonical(full_path).string();
 			auto file = opened_files.find(path); 
 			if (file != opened_files.end()){
 				file->second->close();
@@ -65,8 +66,8 @@ class LogReader{
 			return paths;
 		}
 
-		std::string getNextLine(std::string path){
-			auto path = std::filesystem::canonical(path);
+		std::string getNextLine(std::string file_path){
+			auto path = std::filesystem::canonical(file_path).string();
 			
 			auto& file = opened_files[path];
 
@@ -135,7 +136,7 @@ class LogAnalyser{
 			for (auto status: status_freq){
 				distributions.push_back({status.first, status.second});
 			}
-			std::sort(distributions.begin(), distributions.end(), std::greater<std::pair<int,int>>());
+			std::sort(distributions.begin(), distributions.end(), [](const auto& a, const auto& b){return a.second > b.second;});
 			return distributions;
 		}
 
@@ -148,7 +149,7 @@ class LogAnalyser{
 				distributions.push_back({status.first, status.second});
 			}
 
-			std::sort(distributions.begin(), distributions.end(),std::greater<std::pair<int,int>>());
+			std::sort(distributions.begin(), distributions.end(),[](const auto& a, const auto& b){return a.second > b.second;});
 			return std::vector<std::pair<std::string, int>>(distributions.begin(), distributions.begin()+ max);
 		}
 

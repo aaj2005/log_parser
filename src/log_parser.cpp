@@ -1,5 +1,7 @@
 
 #include "structs.hpp"
+#include <stdexcept>
+
 
 class LogParser{
 
@@ -37,10 +39,15 @@ class LogParser{
 	private:
 		// "192.168.1.5 - - [22/Jul/2026:12:01:00 +0000] \"GET /home HTTP/1.1\" 200 1024"
 		log_entry parseLine(std::string_view line){
-			std::smatch matches;
-			
+		
 			// find the end of the ip address
 			size_t ip_addr_end = line.find(" ");
+			
+			// check that we hit IP address
+			if (ip_addr_end == std::string_view::npos){
+				throw std::invalid_argument("Invalid log entry structure");
+			}
+
 			std::string_view ip = line.substr(0, ip_addr_end);
 
 			// move the pointer to after the end of the ip addr
@@ -50,14 +57,25 @@ class LogParser{
 			size_t timestamp_start = line.find("[");
 			size_t timestamp_end = line.find("]");
 
+			// check that we have the timestamp
+			if (timestamp_start == std::string_view::npos || timestamp_end == std::string_view::npos){
+				throw std::invalid_argument("Invalid log entry structure");
+			}
+
+
 			// skip the open and closing brackets
 			std::string_view timestamp = line.substr(timestamp_start+1, timestamp_end- timestamp_start - 1);
-
+			
 
 			line.remove_prefix(timestamp_end +1);
 
 			size_t quote_start = line.find("\"");
 			size_t quote_end = line.find("\"", quote_start + 1);
+
+			// check that we have the request
+			if (quote_start == std::string_view::npos || quote_end == std::string_view::npos){
+				throw std::invalid_argument("Invalid log entry structure");
+			}
 
 			std::string_view request = line.substr(quote_start + 1, quote_end - quote_start - 1);
 
@@ -66,11 +84,23 @@ class LogParser{
 			// finds first character not matching whitespace
 			size_t status_start = line.find_first_not_of(' ');
     		size_t status_end = line.find(' ', status_start);
+
+			// check that we have the status code
+			if (status_start == std::string_view::npos || status_end == std::string_view::npos){
+				throw std::invalid_argument("Invalid log entry structure");
+			}
+
     		std::string_view status_str = line.substr(status_start, status_end - status_start);
 
 			line.remove_prefix(status_end + 1);
 
 			size_t bytes_start = line.find_first_not_of(' ');
+
+			// check that we have the bytes sent
+			if (bytes_start == std::string_view::npos){
+				throw std::invalid_argument("Invalid log entry structure");
+			}
+
 			std::string_view bytes_str = line.substr(bytes_start);
 
 			return log_entry {
