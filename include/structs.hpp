@@ -1,3 +1,6 @@
+#ifndef STRUCTS_HPP
+#define STRUCTS_HPP
+
 #include <string>
 #include <ctime>
 #include <unordered_map>
@@ -177,3 +180,5 @@ class LogAnalyser{
 };
 
 
+
+#endif
