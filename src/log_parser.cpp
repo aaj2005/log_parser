@@ -36,7 +36,15 @@ class LogParser{
 				} 
 			}
 		}
-
+		std::vector<std::pair<int, int>> code_distr(){
+			return analyser.code_distr();
+		}
+		std::vector<std::pair<std::string, int>> top_n(int n){
+			return analyser.top_n(n);
+		}
+		long long total_sent(){
+			return analyser.total_sent();
+		}
 		
 
 	private:
@@ -118,6 +126,7 @@ class LogParser{
 
 		LogReader reader;
 		LogAnalyser analyser;
+		
 
 };
 
