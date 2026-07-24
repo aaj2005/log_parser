@@ -1,7 +1,9 @@
-# create an executable called log_parser
-add_executable(log_parser)
+# create log_parser lib
+add_library(log_parser STATIC log_parser.cpp)
 
-# the executable depends on the log_parser.cpp source file
-target_sources(log_parser PRIVATE log_parser.cpp)
+# link the structs lib
+target_link_libraries(log_parser PRIVATE structs_lib)
 
-target_compile_features(log_parser PUBLIC cxx_std_23)
+
+# expose the log_parser directory
+target_include_directories(log_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
